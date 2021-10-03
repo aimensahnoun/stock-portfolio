@@ -6,6 +6,7 @@ import { setCurrentUser } from "./redux/user/user.actions";
 
 import { useState, useEffect } from "react";
 import { Container, Spinner } from "react-bootstrap";
+import Dashboard from "./pages/dashboard/dashboard";
 
 function App({ currentUser, setCurrentUser }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -33,13 +34,11 @@ function App({ currentUser, setCurrentUser }) {
         }
       />
 
-      {/* <Route
+      <Route
         exact
         path="/dashboard"
-        render={() =>
-          !currentUser ? <Redirect to="/authentication" /> : <Dashboard />
-        }
-      /> */}
+        render={() => (!currentUser ? <Redirect to="/" /> : <Dashboard />)}
+      />
     </Switch>
   );
 }

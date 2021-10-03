@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Card, Container, Form, Button } from "react-bootstrap";
+import { Helmet } from "react-helmet";
 
 import { connect } from "react-redux";
 import { setCurrentUser } from "../../redux/user/user.actions";
@@ -11,6 +12,12 @@ function Authentication({ setCurrentUser }) {
   const toggleShowError = () => setShowError(!showError);
   return (
     <Container className="pageContainer d-flex justify-content-center align-items-center">
+      {/* Changing Tab Title */}
+      <Helmet>
+        <meta charSet="utf-8" />
+        <title>Authentication</title>
+      </Helmet>
+
       <Card
         style={{ width: "25rem" }}
         className="shadow p-1  bg-white rounded "
@@ -57,7 +64,7 @@ function Authentication({ setCurrentUser }) {
                     budget: "10000",
                   };
                   //Saving data to local storage
-                  localStorage.setItem("userData");
+                  localStorage.setItem("userData", JSON.stringify(userData));
 
                   setCurrentUser(userData);
                 }
