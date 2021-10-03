@@ -12,6 +12,57 @@ import Dashboard from "./pages/dashboard/dashboard";
 function App({ currentUser, setCurrentUser, portfolio, setPortfolio }) {
   const [isLoading, setIsLoading] = useState(true);
 
+  const getPrice = async (symbol) => {
+    try {
+      const price = await fetch(
+        `https://cloud.iexapis.com/stable/stock/${symbol}/quote?token=pk_5888b79bda024f418a152333805dab13`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          return data.latestPrice;
+        });
+      return price;
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  //Updating prices every 2 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updatePrices();
+    }, 120000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const updatePrices = async () => {
+    if (currentUser != null) {
+      let port = portfolio;
+      portfolio.forEach(async (stock) => {
+        const price = await getPrice(stock.symbol);
+
+        const existant = portfolio.find(
+          (stock) => stock.symbol === stock.symbol
+        );
+        const index = portfolio.findIndex(
+          (stock) => stock.symbol === existant.symbol
+        );
+        existant.value = (parseInt(stock.amount) * price).toString();
+
+        port[index] = existant;
+      });
+
+      var userData = {
+        ...currentUser,
+        portfolio: port,
+      };
+      setPortfolio(port);
+
+      localStorage.setItem("userData", JSON.stringify(userData));
+    }
+  };
+
   //Checking if user has an account
   useEffect(() => {
     const userData = JSON.parse(localStorage.getItem("userData")) || null;

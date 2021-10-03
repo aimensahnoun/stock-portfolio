@@ -5,7 +5,7 @@ import {
   FormControl,
   InputGroup,
   Table,
-  Modal,
+  Button,
 } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Helmet } from "react-helmet";
@@ -24,9 +24,21 @@ function Dashboard({ currentUser, setCurrentUser, setPortfolio, portfolio }) {
   //Used to show the results from the search bar
   const [showResults, setShowResults] = useState(false);
   const [apiResults, setApiResults] = useState([]);
+  //Open Search Modal
   const [showModal, setShowModal] = useState(false);
+  //Open Portfolio Modal
+  const [showPortModal, setShowPortModal] = useState(false);
+  //Index for search
   const [dataIndex, setDataIndex] = useState(0);
+  //Index for portfolio
+  const [portIndex, setPortIndex] = useState("");
   const [totalWorth, setTotalWorth] = useState(0);
+  const [isChecked, setIsChecked] = useState("");
+  const [isBuy, setIsBuy] = useState(true);
+
+  const getStock = (stockSymbol) => {
+    return portfolio.find((stock) => stock.symbol === stockSymbol);
+  };
 
   const calculateTotal = () => {
     let total = portfolio.reduce((acc, stock) => {
@@ -41,7 +53,6 @@ function Dashboard({ currentUser, setCurrentUser, setPortfolio, portfolio }) {
   };
 
   const handleClose = () => setShowModal(false);
-
 
   //Calculates the total worth based on changes in the portfolio
   useEffect(() => {
@@ -182,6 +193,59 @@ function Dashboard({ currentUser, setCurrentUser, setPortfolio, portfolio }) {
                 <th></th>
               </tr>
             </thead>
+            <tbody>
+              {portfolio.map((stock, index) => {
+                return (
+                  <tr key={stock.symbol}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={isChecked === stock.symbol ? true : false}
+                        onClick={(e) => {
+                          if (e.target.checked) {
+                            setIsChecked(stock.symbol);
+                          } else {
+                            setIsChecked("");
+                          }
+                        }}
+                      />
+                    </td>
+                    <td>{stock.symbol}</td>
+                    <td>{stock.name}</td>
+                    <td>{stock.amount}</td>
+                    <td>${stock.value}</td>
+                    <td>
+                      <Button
+                        style={{ width: "7rem" }}
+                        variant="success"
+                        disabled={isChecked != stock.symbol ? true : false}
+                        onClick={() => {
+                          setPortIndex(stock.symbol);
+                          setIsBuy(true);
+                          setShowPortModal(true);
+                        }}
+                      >
+                        Buy
+                      </Button>
+                    </td>
+                    <td>
+                      <Button
+                        style={{ width: "7rem" }}
+                        onClick={() => {
+                          setPortIndex(stock.symbol);
+                          setIsBuy(false);
+                          setShowPortModal(true);
+                        }}
+                        variant="danger"
+                        disabled={isChecked != stock.symbol ? true : false}
+                      >
+                        Sell
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
           </Table>
         </Container>
       </Container>
@@ -190,6 +254,17 @@ function Dashboard({ currentUser, setCurrentUser, setPortfolio, portfolio }) {
           result={apiResults[dataIndex]}
           showModal={showModal}
           handleClose={handleClose}
+          isBuy={true}
+        />
+      ) : null}
+      {portfolio.length > 0 && portIndex != "" ? (
+        <CustomModal
+          result={getStock(portIndex)}
+          showModal={showPortModal}
+          handleClose={() => {
+            setShowPortModal(false);
+          }}
+          isBuy={isBuy}
         />
       ) : null}
     </Container>

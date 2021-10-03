@@ -11,13 +11,15 @@ function CustomModal({
   handleClose,
   currentUser,
   setCurrentUser,
-  addStock,
+  calculate,
   portfolio,
   setPortfolio,
+  isBuy,
 }) {
   const [price, setPrice] = useState(0);
   const [showInvalidError, setInvalidError] = useState(false);
   const [showInsufficiantError, setInsufficiantError] = useState(false);
+  const [showAmountError, setAmountError] = useState(false);
   const [amount, setAmount] = useState("");
 
   //Used to replace the existing stock with the new stock
@@ -83,6 +85,15 @@ function CustomModal({
           </h6>
           <h6
             style={{
+              display: showInvalidError ? "block" : "none",
+              fontWeight: "bold",
+              color: "#DD3544",
+            }}
+          >
+            You do not have enough stock
+          </h6>
+          <h6
+            style={{
               display: showInsufficiantError ? "block" : "none",
               fontWeight: "bold",
               color: "#DD3544",
@@ -93,52 +104,92 @@ function CustomModal({
           <Button
             variant="primary"
             onClick={(e) => {
+              var port = [];
               e.preventDefault();
               //Validate amount
               setInsufficiantError(false);
               setInvalidError(false);
-              if (!validator.isInt(amount)) {
+              setAmountError(false);
+              if (!validator.isInt(amount) || parseInt(amount) <= 0) {
                 setInvalidError(true);
               } else if (
-                parseInt(amount) * price >
-                parseInt(currentUser.budget)
+                parseInt(amount) * price > parseInt(currentUser.budget) &&
+                isBuy
               ) {
                 setInsufficiantError(true);
               } else {
-                var port = [];
-                //Checking if stock already exists in the portfolio
-                const existant = portfolio.find(
-                  (stock) => stock.symbol === result.symbol
-                );
-                if (existant) {
-                  existant.amount = (
-                    parseInt(existant.amount) + parseInt(amount)
-                  ).toString();
-                  existant.value = (
-                    parseInt(existant.value) +
-                    parseInt(amount) * price
-                  ).toString();
+                if (isBuy) {
+                  //Checking if stock already exists in the portfolio
+                  const existant = portfolio.find(
+                    (stock) => stock.symbol === result.symbol
+                  );
+                  if (existant) {
+                    const index = portfolio.findIndex(
+                      (stock) => stock.symbol === existant.symbol
+                    );
 
-                  //Updating the portfolio
-                  port = mergeArrayWithObject(portfolio, existant);
-                } else {
-                  port = [
-                    ...portfolio,
-                    {
-                      symbol: result.symbol,
-                      amount: amount,
-                      name: result.name,
-                      value: (parseInt(amount) * price).toString(),
-                    },
-                  ];
+                    existant.amount = (
+                      parseInt(existant.amount) + parseInt(amount)
+                    ).toString();
+                    existant.value = (
+                      parseInt(existant.value) +
+                      parseInt(amount) * price
+                    ).toString();
+
+                    //Updating the portfolio
+                    port = portfolio;
+
+                    port[index] = existant;
+                  } else {
+                    port = [
+                      ...portfolio,
+                      {
+                        symbol: result.symbol,
+                        amount: amount,
+                        name: result.name,
+                        value: (parseInt(amount) * price).toString(),
+                      },
+                    ];
+                  }
+                }
+                //Handeling Sales Logic
+                else {
+                  const existant = portfolio.find(
+                    (stock) => stock.symbol === result.symbol
+                  );
+
+                  if (parseInt(amount) > parseInt(existant.amount)) {
+                    setAmountError(true);
+                  } else {
+                    const index = portfolio.findIndex(
+                      (stock) => stock.symbol === existant.symbol
+                    );
+                    existant.amount = (
+                      parseInt(existant.amount) - parseInt(amount)
+                    ).toString();
+                    existant.value = (
+                      parseInt(existant.value) -
+                      parseInt(amount) * price
+                    ).toString();
+
+                    //Updating the portfolio
+                    port = portfolio;
+
+                    port[index] = existant;
+                  }
                 }
 
                 var userData = {
                   ...currentUser,
-                  budget: (
-                    parseInt(currentUser.budget) -
-                    parseInt(amount) * price
-                  ).toString(),
+                  budget: isBuy
+                    ? (
+                        parseInt(currentUser.budget) -
+                        parseInt(amount) * price
+                      ).toString()
+                    : (
+                        parseInt(currentUser.budget) +
+                        parseInt(amount) * price
+                      ).toString(),
                 };
                 //Updating Redux Store
                 setCurrentUser(userData);
@@ -158,7 +209,7 @@ function CustomModal({
             style={{ width: "100%" }}
             type="submit"
           >
-            Buy
+            {isBuy ? "Buy" : "Sell"}
           </Button>
         </Form>
       </Modal.Body>
