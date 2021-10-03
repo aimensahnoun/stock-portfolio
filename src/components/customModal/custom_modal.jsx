@@ -1,12 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button, Container, Form } from "react-bootstrap";
 import validator from "validator";
+import { connect } from "react-redux";
+import { setCurrentUser } from "../../redux/user/user.actions";
+import { addStock, setPortfolio } from "../../redux/porfolio/portfolio.actions";
 
-function CustomModal({ result, showModal, handleClose }) {
+function CustomModal({
+  result,
+  showModal,
+  handleClose,
+  currentUser,
+  setCurrentUser,
+  addStock,
+  portfolio,
+  setPortfolio,
+}) {
   const [price, setPrice] = useState(0);
   const [showInvalidError, setInvalidError] = useState(false);
   const [showInsufficiantError, setInsufficiantError] = useState(false);
   const [amount, setAmount] = useState("");
+
+  //Used to replace the existing stock with the new stock
+  const mergeArrayWithObject = (arr, obj) =>
+    arr && arr.map((t) => (t.id === obj.id ? obj : t));
 
   const getPrice = async (symbol) => {
     try {
@@ -83,9 +99,60 @@ function CustomModal({ result, showModal, handleClose }) {
               setInvalidError(false);
               if (!validator.isInt(amount)) {
                 setInvalidError(true);
-              } else if (parseInt(amount) * price > 10000) {
+              } else if (
+                parseInt(amount) * price >
+                parseInt(currentUser.budget)
+              ) {
                 setInsufficiantError(true);
               } else {
+                var port = [];
+                //Checking if stock already exists in the portfolio
+                const existant = portfolio.find(
+                  (stock) => stock.symbol === result.symbol
+                );
+                if (existant) {
+                  existant.amount = (
+                    parseInt(existant.amount) + parseInt(amount)
+                  ).toString();
+                  existant.value = (
+                    parseInt(existant.value) +
+                    parseInt(amount) * price
+                  ).toString();
+
+                  //Updating the portfolio
+                  port = mergeArrayWithObject(portfolio, existant);
+                } else {
+                  port = [
+                    ...portfolio,
+                    {
+                      symbol: result.symbol,
+                      amount: amount,
+                      name: result.name,
+                      value: (parseInt(amount) * price).toString(),
+                    },
+                  ];
+                }
+
+                var userData = {
+                  ...currentUser,
+                  budget: (
+                    parseInt(currentUser.budget) -
+                    parseInt(amount) * price
+                  ).toString(),
+                };
+                //Updating Redux Store
+                setCurrentUser(userData);
+                setPortfolio(port);
+
+                //Updating local storage
+                userData = {
+                  ...userData,
+                  portfolio: port,
+                };
+
+                localStorage.setItem("userData", JSON.stringify(userData));
+
+                handleClose();
               }
             }}
             style={{ width: "100%" }}
@@ -99,4 +166,15 @@ function CustomModal({ result, showModal, handleClose }) {
   );
 }
 
-export default CustomModal;
+const mapStateToProps = (state) => ({
+  currentUser: state.user.currentUser,
+  portfolio: state.portfolio.portfolio,
+});
+
+const mapDispatchToProps = (dispatch) => ({
+  setCurrentUser: (userData) => dispatch(setCurrentUser(userData)),
+  addStock: (stockData) => dispatch(addStock(stockData)),
+  setPortfolio: (portfolio) => dispatch(setPortfolio(portfolio)),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(CustomModal);

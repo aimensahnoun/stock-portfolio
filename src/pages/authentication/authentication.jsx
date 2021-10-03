@@ -62,6 +62,7 @@ function Authentication({ setCurrentUser }) {
                   const userData = {
                     fullName: fullName,
                     budget: "10000",
+                    portfolio: [],
                   };
                   //Saving data to local storage
                   localStorage.setItem("userData", JSON.stringify(userData));

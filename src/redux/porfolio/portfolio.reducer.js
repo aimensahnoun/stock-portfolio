@@ -1,5 +1,5 @@
 const INITIAL_STATE = {
-  portfolio: null,
+  portfolio: [],
 };
 
 const porfolioReducer = (state = INITIAL_STATE, action) => {
@@ -7,7 +7,12 @@ const porfolioReducer = (state = INITIAL_STATE, action) => {
     case "SET_PORTFOLIO":
       return {
         ...state,
-        currentUser: action.payload,
+        portfolio: action.payload,
+      };
+    case "ADD_STOCK":
+      return {
+        ...state,
+        portfolio: [...state.portfolio, action.payload],
       };
     default:
       return state;

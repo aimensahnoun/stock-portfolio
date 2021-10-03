@@ -11,12 +11,14 @@ import { connect } from "react-redux";
 import { Helmet } from "react-helmet";
 
 import { setCurrentUser } from "../../redux/user/user.actions";
+import { setPortfolio } from "../../redux/porfolio/portfolio.actions";
 import CustomModal from "../../components/customModal/custom_modal";
 
-function Dashboard({ currentUser, setCurrentUser }) {
+function Dashboard({ currentUser, setCurrentUser, setPortfolio, portfolio }) {
   const logout = () => {
     localStorage.removeItem("userData");
     setCurrentUser(null);
+    setPortfolio([]);
   };
   const [searchValue, setSearchValue] = useState("");
   //Used to show the results from the search bar
@@ -24,12 +26,27 @@ function Dashboard({ currentUser, setCurrentUser }) {
   const [apiResults, setApiResults] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [dataIndex, setDataIndex] = useState(0);
+  const [totalWorth, setTotalWorth] = useState(0);
+
+  const calculateTotal = () => {
+    let total = portfolio.reduce((acc, stock) => {
+      return acc + parseInt(stock.value);
+    }, 0);
+
+    setTotalWorth(total + parseInt(currentUser.budget));
+  };
 
   const handleShow = () => {
     setShowModal(true);
   };
 
   const handleClose = () => setShowModal(false);
+
+
+  //Calculates the total worth based on changes in the portfolio
+  useEffect(() => {
+    calculateTotal();
+  }, [portfolio]);
 
   //Used in order to avoid calling the api everytime the user types a letter
   useEffect(() => {
@@ -71,7 +88,7 @@ function Dashboard({ currentUser, setCurrentUser }) {
         <h3>Portfolio</h3>
 
         <div style={{ textAlign: "center" }}>
-          <h6>Total Worth : ${currentUser.budget}</h6>
+          <h6>Total Worth : ${totalWorth}</h6>
           <h6>Cash Balance : ${currentUser.budget}</h6>
         </div>
 
@@ -181,10 +198,12 @@ function Dashboard({ currentUser, setCurrentUser }) {
 
 const mapStateToProps = (state) => ({
   currentUser: state.user.currentUser,
+  portfolio: state.portfolio.portfolio,
 });
 
 const mapDispatchToProps = (dispatch) => ({
   setCurrentUser: (userData) => dispatch(setCurrentUser(userData)),
+  setPortfolio: (portfolio) => dispatch(setPortfolio(portfolio)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(Dashboard);
