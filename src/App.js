@@ -1,25 +1,54 @@
-import logo from "./logo.svg";
-import "./App.css";
+import { Switch, Route, Redirect } from "react-router-dom";
+import { connect } from "react-redux";
+import Authentication from "./pages/authentication/authentication";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+import { setCurrentUser } from "./redux/user/user.actions";
+
+import { useState, useEffect } from "react";
+import { Container, Spinner } from "react-bootstrap";
+
+function App({ currentUser, setCurrentUser }) {
+  const [isLoading, setIsLoading] = useState(true);
+
+  //Checking if user has an account
+  useEffect(() => {
+    const userData = JSON.parse(localStorage.getItem("userData")) || null;
+    if (userData) {
+      setCurrentUser(userData);
+    }
+    setIsLoading(false);
+  }, [setCurrentUser]);
+
+  return isLoading ? (
+    <Container className="d-flex align-items-center justify-content-center pageContainer">
+      <Spinner animation="grow" />
+    </Container>
+  ) : (
+    <Switch>
+      <Route
+        exact
+        path="/"
+        render={() =>
+          currentUser ? <Redirect to="/dashboard" /> : <Authentication />
+        }
+      />
+
+      {/* <Route
+        exact
+        path="/dashboard"
+        render={() =>
+          !currentUser ? <Redirect to="/authentication" /> : <Dashboard />
+        }
+      /> */}
+    </Switch>
   );
 }
 
-export default App;
+const mapStateToProps = (state) => ({
+  currentUser: state.user.currentUser,
+});
+
+const mapDispatchToProps = (dispatch) => ({
+  setCurrentUser: (userData) => dispatch(setCurrentUser(userData)),
+});
+export default connect(mapStateToProps, mapDispatchToProps)(App);
